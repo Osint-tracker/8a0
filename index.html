@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="8-0 — Champions League Football Draft Game. Build your dream XI from historical UCL rosters.">
+    <title>8-0 — Champions League Draft</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bitter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        /* ═══════════════════════════════════════════════════════════
+           DESIGN SYSTEM — 8-0 CHAMPIONS LEAGUE DRAFT
+           Warm editorial / sports newspaper aesthetic
+           ═══════════════════════════════════════════════════════════ */
+        :root {
+            --paper: #FAF6EF;
+            --paper-dark: #F0EBE1;
+            --paper-darker: #E5DFD3;
+            --card: #FFFFFF;
+            --card-border: #DDD6C8;
+            --ink: #2D2A24;
+            --ink-light: #5C574D;
+            --ink-muted: #9B9487;
+            --ink-faint: #C4BDB0;
+            --coral: #E85D3A;
+            --coral-light: #F07B5E;
+            --coral-dark: #C94A2A;
+            --coral-bg: rgba(232,93,58,0.08);
+            --success: #2B8A4E;
+            --success-bg: rgba(43,138,78,0.10);
+            --danger: #DC3545;
+            --tier-s: #C6850A;
+            --tier-a: #1D7A3F;
+            --tier-b: #2563EB;
+            --tier-c: #7A7468;
+            --pitch-g1: #2A6B2A; --pitch-g2: #327D32;
+            --pitch-g3: #3A9139; --pitch-g4: #358535;
+            --pitch-border: #1E4D1E;
+            --pitch-line: rgba(255,255,255,0.35);
+            --font: 'Bitter', Georgia, serif;
+            --radius: 6px;
+            --transition: 180ms ease;
+            --shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        /* ─── DARK MODE ─── */
+        [data-theme="dark"] {
+            --paper: #131318;
+            --paper-dark: #1a1a22;
+            --paper-darker: #24242e;
+            --card: #1e1e28;
+            --card-border: #33333f;
+            --ink: #e8e6e1;
+            --ink-light: #aaa69e;
+            --ink-muted: #706c64;
+            --ink-faint: #4a473f;
+            --coral-bg: rgba(232,93,58,0.12);
+            --success-bg: rgba(43,138,78,0.15);
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html,body { height:100%; overflow:hidden; }
+        body { font-family:var(--font); background:var(--paper); color:var(--ink); display:flex; flex-direction:column; }
+
+        /* ─── THEME TOGGLE (fixed) ─── */
+        #theme-toggle {
+            position:fixed; top:12px; right:14px; z-index:500;
+            width:42px; height:24px; border-radius:12px;
+            background:var(--card-border); border:none; cursor:pointer;
+            transition:background var(--transition);
+        }
+        #theme-toggle::after {
+            content:''; position:absolute; top:3px; left:3px;
+            width:18px; height:18px; border-radius:50%;
+            background:var(--ink); transition:transform 0.25s ease;
+        }
+        [data-theme="dark"] #theme-toggle { background:#555; }
+        [data-theme="dark"] #theme-toggle::after { transform:translateX(18px); background:var(--coral); }
+
+        /* ═══════════════════════════════════════════════════════════
+           START SCREEN
+           ═══════════════════════════════════════════════════════════ */
+        #start-screen {
+            position:fixed; inset:0; z-index:400;
+            background:var(--paper);
+            display:flex; align-items:center; justify-content:center;
+            overflow-y:auto; padding:20px;
+        }
+        #start-screen.hidden { display:none; }
+
+        .start-content {
+            width:100%; max-width:520px;
+            display:flex; flex-direction:column; align-items:center; gap:28px;
+            padding:32px 0;
+        }
+        .start-logo { text-align:center; }
+        .start-logo h1 { font-size:52px; font-weight:900; color:var(--ink); letter-spacing:3px; }
+        .start-logo p { font-size:13px; font-weight:600; color:var(--coral); text-transform:uppercase; letter-spacing:2.5px; margin-top:4px; }
+        .start-section { width:100%; }
+        .start-section h2 {
+            font-size:11px; font-weight:700; text-transform:uppercase;
+            letter-spacing:2.5px; color:var(--ink-muted); margin-bottom:12px; text-align:center;
+        }
+
+        .formation-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+        .formation-btn {
+            padding:14px 6px; background:var(--card); border:2px solid var(--card-border);
+            border-radius:var(--radius); font-family:var(--font); font-size:15px; font-weight:700;
+            color:var(--ink); cursor:pointer; transition:all var(--transition); text-align:center;
+        }
+        .formation-btn:hover { border-color:var(--ink-muted); }
+        .formation-btn.selected { border-color:var(--coral); background:var(--coral-bg); color:var(--coral); }
+
+        .difficulty-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+        .diff-btn {
+            padding:12px 8px; background:var(--card); border:2px solid var(--card-border);
+            border-radius:var(--radius); font-family:var(--font); font-size:13px; font-weight:600;
+            color:var(--ink); cursor:pointer; transition:all var(--transition); text-align:center;
+        }
+        .diff-btn:hover { border-color:var(--ink-muted); }
+        .diff-btn.selected { border-color:var(--coral); background:var(--coral-bg); color:var(--coral); }
+        .diff-btn small { display:block; font-size:10px; font-weight:500; color:var(--ink-muted); margin-top:3px; }
+        .diff-btn.selected small { color:var(--coral-light); }
+
+        /* ─── DIABOLICA SWITCH ─── */
+        .diabolica-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 8px;
+        }
+        .diabolica-label {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--ink);
+        }
+        .diabolica-desc {
+            font-size: 11px;
+            color: var(--ink-light);
+            text-align: center;
+            margin-top: 6px;
+            max-width: 440px;
+            line-height: 1.4;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 26px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--card-border);
+            transition: .3s;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: var(--card);
+            transition: .3s;
+        }
+        input:checked + .slider {
+            background-color: var(--danger);
+        }
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+        .slider.round {
+            border-radius: 34px;
+        }
+        .slider.round:before {
+            border-radius: 50%;
+        }
+
+        #start-btn {
+            width:100%; padding:16px; background:var(--ink); color:var(--paper);
+            font-family:var(--font); font-size:15px; font-weight:800; text-transform:uppercase;
+            letter-spacing:3px; border:2px solid var(--ink); border-radius:var(--radius);
+            cursor:pointer; transition:all var(--transition);
+        }
+        #start-btn:hover:not(:disabled) { background:var(--coral); border-color:var(--coral); }
+        #start-btn:disabled { background:var(--paper-darker); border-color:var(--card-border); color:var(--ink-muted); cursor:not-allowed; }
+
+        /* ═══════════════════════════════════════════════════════════
+           GAME SCREEN
+           ═══════════════════════════════════════════════════════════ */
+        #game-screen { display:none; flex-direction:column; height:100%; }
+        #game-screen.active { display:flex; }
+
+        /* ─── HEADER ─── */
+        #app-header {
+            display:flex; align-items:center; justify-content:space-between;
+            padding:8px 20px; background:var(--card); border-bottom:2px solid var(--card-border);
+            flex-shrink:0; z-index:100; gap:8px; flex-wrap:wrap;
+        }
+        .header-brand { display:flex; align-items:center; gap:10px; }
+        .header-brand h1 { font-size:22px; font-weight:900; color:var(--ink); letter-spacing:2px; }
+        .header-brand .formation-badge {
+            font-size:10px; font-weight:700; color:var(--coral);
+            background:var(--coral-bg); padding:3px 8px; border-radius:4px;
+            letter-spacing:1px;
+        }
+        .header-stats { display:flex; gap:4px; align-items:center; flex-wrap:wrap; }
+        .stat-block {
+            text-align:center; padding:2px 10px; border-left:2px solid var(--paper-darker);
+        }
+        .stat-block:first-child { border-left:none; }
+        .stat-block .stat-value { font-size:18px; font-weight:800; color:var(--ink); }
+        .stat-block .stat-label { font-size:8px; text-transform:uppercase; letter-spacing:1.5px; color:var(--ink-muted); font-weight:600; }
+        .stat-block.tokens .stat-value { color:var(--coral); }
+
+        /* ─── MAIN LAYOUT ─── */
+        #app-main { display:flex; flex:1; overflow:hidden; flex-direction:column; }
+
+        /* ─── PITCH AREA ─── */
+        #pitch-container {
+            flex:0 0 auto; display:flex; align-items:center; justify-content:center;
+            padding:10px; background:var(--paper);
+        }
+        #pitch {
+            width:100%; max-width:540px; aspect-ratio:70/100;
+            position:relative;
+            background:
+                repeating-linear-gradient(0deg,transparent,transparent 38px,rgba(255,255,255,0.05) 38px,rgba(255,255,255,0.05) 40px),
+                linear-gradient(180deg,var(--pitch-g1) 0%,var(--pitch-g2) 15%,var(--pitch-g3) 30%,var(--pitch-g4) 50%,var(--pitch-g3) 70%,var(--pitch-g2) 85%,var(--pitch-g1) 100%);
+            border-radius:8px; border:3px solid var(--pitch-border);
+            overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.15),inset 0 0 50px rgba(0,0,0,0.1);
+        }
+        /* Center circle */
+        #pitch::before {
+            content:''; position:absolute; top:50%; left:50%;
+            transform:translate(-50%,-50%);
+            width:100px; height:100px;
+            border:2px solid var(--pitch-line); border-radius:50%; pointer-events:none;
+        }
+        /* Halfway line */
+        #pitch::after {
+            content:''; position:absolute; top:50%; left:8%; right:8%;
+            height:2px; background:var(--pitch-line); pointer-events:none;
+        }
+        .pitch-box {
+            position:absolute; left:50%; transform:translateX(-50%);
+            width:55%; border:2px solid var(--pitch-line); pointer-events:none;
+        }
+        .pitch-box.top { top:0; height:14%; border-top:none; }
+        .pitch-box.bottom { bottom:0; height:14%; border-bottom:none; }
+
+        /* ─── SLOTS ─── */
+        .slot {
+            position:absolute; width:clamp(50px,12vw,76px); height:clamp(50px,12vw,76px);
+            transform:translate(-50%,-50%); border-radius:50%;
+            cursor:default; transition:all var(--transition);
+            display:flex; flex-direction:column; align-items:center; justify-content:center;
+            text-align:center; z-index:2;
+        }
+        .slot.empty {
+            background:rgba(255,255,255,0.07);
+            border:2px dashed rgba(255,255,255,0.4);
+        }
+        .slot.empty .slot-pos {
+            font-size:clamp(10px,2vw,13px); font-weight:700;
+            color:rgba(255,255,255,0.55); text-transform:uppercase; letter-spacing:1px;
+        }
+        .slot.filled {
+            background:var(--card); border:3px solid var(--coral);
+            box-shadow:0 2px 12px rgba(0,0,0,0.25);
+        }
+        .slot.filled .slot-name {
+            font-size:clamp(6px,1.3vw,8px); font-weight:700; color:var(--ink);
+            line-height:1.1; max-width:90%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+        }
+        .slot.filled .slot-rating {
+            font-size:clamp(14px,3vw,20px); font-weight:900; color:var(--ink); line-height:1;
+        }
+        .slot.filled .slot-pos-small {
+            font-size:clamp(5px,1vw,7px); color:var(--ink-muted);
+            text-transform:uppercase; font-weight:600; letter-spacing:0.5px;
+        }
+        .slot.filled.oop {
+            border-color: var(--danger);
+            box-shadow: 0 2px 12px rgba(220, 53, 69, 0.4), inset 0 0 8px rgba(220, 53, 69, 0.2);
+            background: #FFF5F5;
+        }
+        [data-theme="dark"] .slot.filled.oop {
+            background: #2D1A1C;
+        }
+        .slot.filled.oop .slot-rating {
+            color: var(--danger);
+        }
+        .slot.filled.oop .slot-pos-small {
+            color: var(--danger);
+            font-weight: 800;
+        }
+        .oop-badge {
+            background: var(--danger);
+            color: #FFF;
+            padding: 1px 3px;
+            font-size: clamp(5px, 0.9vw, 6px);
+            font-weight: 800;
+            border-radius: 3px;
+            margin-left: 2px;
+        }
+        .slot.highlight {
+            border:3px solid #FFF; background:rgba(255,255,255,0.22);
+            box-shadow:0 0 0 4px rgba(255,255,255,0.3),0 0 18px rgba(255,255,255,0.2);
+            cursor:pointer; animation:slotPulse 1.4s ease-in-out infinite;
+        }
+        .slot.highlight .slot-pos { color:#FFF; font-weight:800; }
+        @keyframes slotPulse {
+            0%,100% { box-shadow:0 0 0 3px rgba(255,255,255,0.2),0 0 10px rgba(255,255,255,0.12); }
+            50% { box-shadow:0 0 0 6px rgba(255,255,255,0.35),0 0 22px rgba(255,255,255,0.28); }
+        }
+        @keyframes slotPlace {
+            0% { transform:translate(-50%,-50%) scale(0.5); opacity:0; }
+            60% { transform:translate(-50%,-50%) scale(1.1); }
+            100% { transform:translate(-50%,-50%) scale(1); opacity:1; }
+        }
+        .slot.just-placed { animation:slotPlace 0.35s ease-out; }
+
+        /* ─── SIDEBAR ─── */
+        #sidebar {
+            flex:1; display:flex; flex-direction:column;
+            background:var(--card); border-top:2px solid var(--card-border);
+            overflow:hidden; min-height:0;
+        }
+
+        /* ─── ROLL SECTION ─── */
+        #roll-section { padding:12px 16px; border-bottom:2px solid var(--paper-darker); flex-shrink:0; }
+        #roll-btn {
+            width:100%; padding:12px; background:var(--ink); color:var(--paper);
+            font-family:var(--font); font-size:13px; font-weight:800; text-transform:uppercase;
+            letter-spacing:2.5px; border:2px solid var(--ink); border-radius:var(--radius);
+            cursor:pointer; transition:all var(--transition);
+        }
+        #roll-btn:hover:not(:disabled) { background:var(--coral); border-color:var(--coral); }
+        #roll-btn:disabled { background:var(--paper-darker); border-color:var(--card-border); color:var(--ink-muted); cursor:not-allowed; }
+
+        .action-row { display:flex; gap:6px; margin-top:8px; }
+        .action-row button {
+            flex:1; padding:8px 4px; font-family:var(--font); font-size:10px; font-weight:700;
+            text-transform:uppercase; letter-spacing:1px; border-radius:var(--radius);
+            cursor:pointer; transition:all var(--transition); border:2px solid var(--card-border);
+            background:var(--card); color:var(--ink);
+        }
+        .action-row button:hover:not(:disabled) { border-color:var(--coral); color:var(--coral); }
+        .action-row button:disabled { opacity:0.35; cursor:not-allowed; }
+        #skip-btn { border-color:var(--paper-darker); color:var(--ink-muted); }
+        #skip-btn:hover:not(:disabled) { border-color:var(--ink-muted); color:var(--ink-light); }
+        .action-row.hidden { display:none; }
+
+        /* Rolled team display */
+        #rolled-team-display {
+            margin-top:10px; padding:12px; background:var(--paper);
+            border-radius:var(--radius); border:2px solid var(--card-border); display:none;
+        }
+        #rolled-team-display.visible { display:block; animation:fadeSlideIn 0.3s ease-out; }
+        @keyframes fadeSlideIn { from { opacity:0; transform:translateY(-5px); } to { opacity:1; transform:translateY(0); } }
+        .drawn-label { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:2px; color:var(--ink-muted); margin-bottom:2px; }
+        #rtd-name { font-size:18px; font-weight:900; color:var(--ink); line-height:1.1; }
+        #rtd-year { font-size:13px; font-weight:700; color:var(--coral); margin-top:1px; }
+        #rtd-count { font-size:9px; color:var(--ink-muted); margin-top:4px; text-transform:uppercase; letter-spacing:1.5px; font-weight:600; }
+
+        /* ─── ROSTER ─── */
+        #roster-section { flex:1; overflow-y:auto; min-height:0; }
+        #roster-section::-webkit-scrollbar { width:5px; }
+        #roster-section::-webkit-scrollbar-track { background:var(--paper); }
+        #roster-section::-webkit-scrollbar-thumb { background:var(--card-border); border-radius:3px; }
+
+        .roster-header {
+            padding:8px 16px; font-size:9px; font-weight:700; text-transform:uppercase;
+            letter-spacing:2px; color:var(--ink-muted); background:var(--paper);
+            border-bottom:1px solid var(--paper-darker); position:sticky; top:0; z-index:5;
+        }
+        .roster-item {
+            display:flex; align-items:center; gap:8px; padding:8px 16px;
+            border-bottom:1px solid var(--paper-dark); cursor:pointer; transition:all var(--transition);
+        }
+        .roster-item:hover:not(.disabled):not(.selected) { background:var(--paper); }
+        .roster-item.selected { background:var(--coral-bg); border-left:4px solid var(--coral); }
+        .roster-item.disabled { opacity:0.25; cursor:not-allowed; pointer-events:none; }
+        .roster-item .ri-name {
+            font-size:13px; font-weight:700; color:var(--ink); flex:1;
+            white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+        }
+        .roster-item .ri-pos { font-size:10px; color:var(--ink-muted); font-weight:500; min-width:45px; text-align:right; }
+        .roster-item .ri-rating { font-size:18px; font-weight:900; min-width:32px; text-align:right; flex-shrink:0; }
+        .roster-item .ri-rating.tier-S { color:var(--tier-s); }
+        .roster-item .ri-rating.tier-A { color:var(--tier-a); }
+        .roster-item .ri-rating.tier-B { color:var(--tier-b); }
+        .roster-item .ri-rating.tier-C { color:var(--tier-c); }
+
+        .oop-warning-banner {
+            background: var(--danger);
+            color: #FFFFFF;
+            padding: 10px 14px;
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 1.4;
+            text-align: center;
+            border-radius: var(--radius);
+            margin: 10px 16px;
+            animation: oopFlash 1s infinite alternate;
+        }
+        @keyframes oopFlash {
+            from { box-shadow: 0 0 4px rgba(220,53,69,0.5); }
+            to { box-shadow: 0 0 14px rgba(220,53,69,0.9); }
+        }
+
+        /* ─── EMPTY STATE ─── */
+        #empty-state {
+            display:flex; flex-direction:column; align-items:center; justify-content:center;
+            height:100%; padding:30px; text-align:center;
+        }
+        #empty-state .msg { font-size:12px; color:var(--ink-muted); line-height:2; }
+        #empty-state .msg strong { color:var(--coral); }
+
+        /* ─── HISTORY ─── */
+        #history-section { border-top:2px solid var(--paper-darker); max-height:90px; overflow-y:auto; flex-shrink:0; }
+        .history-item {
+            display:flex; align-items:center; gap:6px; padding:4px 16px;
+            font-size:9px; color:var(--ink-muted); border-bottom:1px solid var(--paper-dark);
+        }
+        .history-item .hi-round { font-weight:800; color:var(--coral); min-width:18px; }
+        .history-item .hi-text { flex:1; color:var(--ink-light); }
+        .history-item .hi-team { color:var(--ink-muted); font-style:italic; }
+
+        /* ─── INSTRUCTIONS BAR ─── */
+        #instructions-bar {
+            padding:8px 20px; background:var(--card); border-top:2px solid var(--card-border);
+            text-align:center; font-size:11px; color:var(--ink-light); flex-shrink:0; font-weight:500;
+        }
+        #instructions-bar .key {
+            display:inline-block; padding:1px 6px; background:var(--ink); color:var(--paper);
+            border-radius:3px; font-weight:700; font-size:9px; text-transform:uppercase;
+            letter-spacing:0.5px; margin:0 1px;
+        }
+
+        /* ─── GAME COMPLETE ─── */
+        #game-complete {
+            position:fixed; inset:0; background:rgba(250,246,239,0.95);
+            backdrop-filter:blur(8px); display:none; align-items:center; justify-content:center;
+            z-index:300; flex-direction:column; gap:14px;
+        }
+        [data-theme="dark"] #game-complete { background:rgba(19,19,24,0.95); }
+        #game-complete.visible { display:flex; animation:fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+        #game-complete h2 { font-size:32px; font-weight:900; color:var(--ink); text-transform:uppercase; letter-spacing:4px; }
+        #game-complete .final-label { font-size:10px; color:var(--ink-muted); text-transform:uppercase; letter-spacing:3px; font-weight:700; }
+        #game-complete .final-rating { font-size:64px; font-weight:900; color:var(--coral); line-height:1; }
+        #restart-btn {
+            padding:14px 36px; background:var(--ink); color:var(--paper);
+            font-family:var(--font); font-size:13px; font-weight:800; text-transform:uppercase;
+            letter-spacing:2px; border:2px solid var(--ink); border-radius:var(--radius);
+            cursor:pointer; transition:all var(--transition); margin-top:6px;
+        }
+        #restart-btn:hover { background:var(--coral); border-color:var(--coral); }
+
+        /* ═══════════════════════════════════════════════════════════
+           RESPONSIVE — DESKTOP
+           ═══════════════════════════════════════════════════════════ */
+        @media (min-width:900px) {
+            #app-main { flex-direction:row; }
+            #pitch-container { flex:1; padding:16px; }
+            #pitch { max-width:580px; }
+            #sidebar { flex:0 0 370px; border-top:none; border-left:2px solid var(--card-border); }
+            .slot { width:76px; height:76px; }
+            .slot.filled .slot-name { font-size:8px; }
+            .slot.filled .slot-rating { font-size:20px; }
+            .slot.filled .slot-pos-small { font-size:7px; }
+            #pitch::before { width:110px; height:110px; }
+        }
+
+        @media (max-width:480px) {
+            .header-stats { gap:2px; }
+            .stat-block { padding:2px 6px; }
+            .stat-block .stat-value { font-size:15px; }
+            .stat-block .stat-label { font-size:7px; }
+            .start-logo h1 { font-size:40px; }
+            #pitch::before { width:70px; height:70px; }
+        }
+
+        .hidden-ui { display:none !important; }
+    </style>
+</head>
+<body>
+
+    <!-- Theme Toggle (always visible) -->
+    <button id="theme-toggle" title="Cambia tema"></button>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         START SCREEN
+         ═══════════════════════════════════════════════════════════ -->
+    <div id="start-screen">
+        <div class="start-content">
+            <div class="start-logo">
+                <h1>8-0</h1>
+                <p>Champions League Draft</p>
+            </div>
+
+            <section class="start-section">
+                <h2>Seleziona Formazione</h2>
+                <div class="formation-grid" id="formation-grid"></div>
+            </section>
+
+            <section class="start-section">
+                <h2>Seleziona Difficolt&agrave;</h2>
+                <div class="difficulty-grid" id="difficulty-grid"></div>
+            </section>
+
+            <section class="start-section">
+                <h2>Modalit&agrave; Diabolica</h2>
+                <div class="diabolica-container">
+                    <label class="switch">
+                        <input type="checkbox" id="diabolica-toggle">
+                        <span class="slider round"></span>
+                    </label>
+                    <span class="diabolica-label">Modalit&agrave; Diabolica</span>
+                </div>
+                <p class="diabolica-desc">
+                    Disattiva il filtro intelligente ("Smart Roll"). Se estrai una squadra senza ruoli compatibili, potrai inserire qualsiasi giocatore con valutazione dimezzata (Malus -50%) e slot evidenziato in rosso.
+                </p>
+            </section>
+
+            <button id="start-btn" disabled>Inizia il Draft</button>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         GAME SCREEN
+         ═══════════════════════════════════════════════════════════ -->
+    <div id="game-screen">
+        <header id="app-header">
+            <div class="header-brand">
+                <h1>8-0</h1>
+                <span class="formation-badge" id="formation-badge"></span>
+            </div>
+            <div class="header-stats">
+                <div class="stat-block">
+                    <div class="stat-value" id="stat-filled">0/11</div>
+                    <div class="stat-label">Giocatori</div>
+                </div>
+                <div class="stat-block">
+                    <div class="stat-value" id="stat-avg">--</div>
+                    <div class="stat-label">Media</div>
+                </div>
+                <div class="stat-block">
+                    <div class="stat-value" id="stat-rolls">0</div>
+                    <div class="stat-label">Tiri</div>
+                </div>
+                <div class="stat-block tokens">
+                    <div class="stat-value" id="stat-tokens">0</div>
+                    <div class="stat-label">Gettoni</div>
+                </div>
+            </div>
+        </header>
+
+        <main id="app-main">
+            <div id="pitch-container">
+                <div id="pitch">
+                    <div class="pitch-box top"></div>
+                    <div class="pitch-box bottom"></div>
+                </div>
+            </div>
+
+            <aside id="sidebar">
+                <div id="roll-section">
+                    <button id="roll-btn">Roll Team</button>
+                    <div class="action-row hidden" id="action-row">
+                        <button id="reroll-team-btn" disabled>Cambio Squadra</button>
+                        <button id="reroll-year-btn" disabled>Cambio Anno</button>
+                        <button id="skip-btn">Passa</button>
+                    </div>
+                    <div id="rolled-team-display">
+                        <div class="drawn-label">Estratta</div>
+                        <div id="rtd-name"></div>
+                        <div id="rtd-year"></div>
+                        <div id="rtd-count"></div>
+                    </div>
+                </div>
+
+                <div id="roster-section">
+                    <div id="empty-state">
+                        <div class="msg">
+                            Premi <strong>Roll Team</strong> per pescare<br>
+                            una squadra della Champions League.<br><br>
+                            Scegli un giocatore per ogni tiro<br>
+                            per completare la formazione.
+                        </div>
+                    </div>
+                </div>
+
+                <div id="history-section"></div>
+            </aside>
+        </main>
+
+        <div id="instructions-bar">
+            <span class="key">ROLL</span> una squadra
+            &rarr; <span class="key">SCEGLI</span> un giocatore
+            &rarr; <span class="key">PIAZZA</span> nel campo
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         GAME COMPLETE
+         ═══════════════════════════════════════════════════════════ -->
+    <div id="game-complete">
+        <h2>Squadra Completa!</h2>
+        <div class="final-label">Punteggio Totale</div>
+        <div class="final-rating" id="final-rating-value">0</div>
+        <button id="restart-btn">Nuovo Draft</button>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         GAME ENGINE
+         ═══════════════════════════════════════════════════════════ -->
+    <script>
+    (function() {
+        'use strict';
+
+        /* ══════════════════════════════════════════════════════════
+           FORMATION DEFINITIONS
+           Each slot: { id, label, x(%), y(%), accepts[] }
+           ══════════════════════════════════════════════════════════ */
+        const FORMATIONS = {
+            '4-3-3': [
+                { id:'GK',  label:'GK',  x:50, y:88, accepts:['GK'] },
+                { id:'LB',  label:'LB',  x:14, y:70, accepts:['LB'] },
+                { id:'CB1', label:'CB',  x:36, y:75, accepts:['CB'] },
+                { id:'CB2', label:'CB',  x:64, y:75, accepts:['CB'] },
+                { id:'RB',  label:'RB',  x:86, y:70, accepts:['RB'] },
+                { id:'CM1', label:'CM',  x:28, y:50, accepts:['CM','CDM','CAM'] },
+                { id:'CM2', label:'CM',  x:50, y:46, accepts:['CM','CDM','CAM'] },
+                { id:'CM3', label:'CM',  x:72, y:50, accepts:['CM','CDM','CAM'] },
+                { id:'LW',  label:'LW',  x:18, y:26, accepts:['LW','LM','ST','CF'] },
+                { id:'RW',  label:'RW',  x:82, y:26, accepts:['RW','RM','ST','CF'] },
+                { id:'ST',  label:'ST',  x:50, y:16, accepts:['ST','CF','CAM'] },
+            ],
+            '4-2-3-1': [
+                { id:'GK',  label:'GK',  x:50, y:88, accepts:['GK'] },
+                { id:'LB',  label:'LB',  x:14, y:70, accepts:['LB'] },
+                { id:'CB1', label:'CB',  x:36, y:75, accepts:['CB'] },
+                { id:'CB2', label:'CB',  x:64, y:75, accepts:['CB'] },
+                { id:'RB',  label:'RB',  x:86, y:70, accepts:['RB'] },
+                { id:'CDM1',label:'CDM', x:36, y:54, accepts:['CDM','CM'] },
+                { id:'CDM2',label:'CDM', x:64, y:54, accepts:['CDM','CM'] },
+                { id:'LW',  label:'LW',  x:16, y:35, accepts:['LW','LM'] },
+                { id:'CAM', label:'CAM', x:50, y:35, accepts:['CAM','CM','CF'] },
+                { id:'RW',  label:'RW',  x:84, y:35, accepts:['RW','RM'] },
+                { id:'ST',  label:'ST',  x:50, y:16, accepts:['ST','CF'] },
+            ],
+            '4-4-2': [
+                { id:'GK',  label:'GK',  x:50, y:88, accepts:['GK'] },
+                { id:'LB',  label:'LB',  x:14, y:70, accepts:['LB'] },
+                { id:'CB1', label:'CB',  x:36, y:75, accepts:['CB'] },
+                { id:'CB2', label:'CB',  x:64, y:75, accepts:['CB'] },
+                { id:'RB',  label:'RB',  x:86, y:70, accepts:['RB'] },
+                { id:'LM',  label:'LM',  x:14, y:48, accepts:['LM','LW'] },
+                { id:'CM1', label:'CM',  x:38, y:50, accepts:['CM','CDM','CAM'] },
+                { id:'CM2', label:'CM',  x:62, y:50, accepts:['CM','CDM','CAM'] },
+                { id:'RM',  label:'RM',  x:86, y:48, accepts:['RM','RW'] },
+                { id:'ST1', label:'ST',  x:38, y:20, accepts:['ST','CF'] },
+                { id:'ST2', label:'ST',  x:62, y:20, accepts:['ST','CF'] },
+            ],
+            '4-3-1-2': [
+                { id:'GK',  label:'GK',  x:50, y:88, accepts:['GK'] },
+                { id:'LB',  label:'LB',  x:14, y:70, accepts:['LB'] },
+                { id:'CB1', label:'CB',  x:36, y:75, accepts:['CB'] },
+                { id:'CB2', label:'CB',  x:64, y:75, accepts:['CB'] },
+                { id:'RB',  label:'RB',  x:86, y:70, accepts:['RB'] },
+                { id:'CM1', label:'CM',  x:28, y:55, accepts:['CM','CDM'] },
+                { id:'CM2', label:'CM',  x:50, y:52, accepts:['CM','CDM'] },
+                { id:'CM3', label:'CM',  x:72, y:55, accepts:['CM','CDM'] },
+                { id:'CAM', label:'CAM', x:50, y:36, accepts:['CAM','CM','CF'] },
+                { id:'ST1', label:'ST',  x:38, y:18, accepts:['ST','CF'] },
+                { id:'ST2', label:'ST',  x:62, y:18, accepts:['ST','CF'] },
+            ],
+            '3-5-2': [
+                { id:'GK',  label:'GK',  x:50, y:88, accepts:['GK'] },
+                { id:'CB1', label:'CB',  x:26, y:74, accepts:['CB'] },
+                { id:'CB2', label:'CB',  x:50, y:76, accepts:['CB'] },
+                { id:'CB3', label:'CB',  x:74, y:74, accepts:['CB'] },
+                { id:'LWB', label:'LWB', x:10, y:50, accepts:['LB','LM','LW'] },
+                { id:'CM1', label:'CM',  x:32, y:48, accepts:['CM','CDM','CAM'] },
+                { id:'CDM', label:'CDM', x:50, y:52, accepts:['CDM','CM'] },
+                { id:'CM2', label:'CM',  x:68, y:48, accepts:['CM','CDM','CAM'] },
+                { id:'RWB', label:'RWB', x:90, y:50, accepts:['RB','RM','RW'] },
+                { id:'ST1', label:'ST',  x:38, y:20, accepts:['ST','CF'] },
+                { id:'ST2', label:'ST',  x:62, y:20, accepts:['ST','CF'] },
+            ],
+            '3-4-2-1': [
+                { id:'GK',  label:'GK',  x:50, y:88, accepts:['GK'] },
+                { id:'CB1', label:'CB',  x:26, y:74, accepts:['CB'] },
+                { id:'CB2', label:'CB',  x:50, y:76, accepts:['CB'] },
+                { id:'CB3', label:'CB',  x:74, y:74, accepts:['CB'] },
+                { id:'LM',  label:'LM',  x:14, y:50, accepts:['LM','LW','LB'] },
+                { id:'CM1', label:'CM',  x:38, y:52, accepts:['CM','CDM'] },
+                { id:'CM2', label:'CM',  x:62, y:52, accepts:['CM','CDM'] },
+                { id:'RM',  label:'RM',  x:86, y:50, accepts:['RM','RW','RB'] },
+                { id:'CAM1',label:'CAM', x:36, y:32, accepts:['CAM','CF','CM','LW'] },
+                { id:'CAM2',label:'CAM', x:64, y:32, accepts:['CAM','CF','CM','RW'] },
+                { id:'ST',  label:'ST',  x:50, y:16, accepts:['ST','CF'] },
+            ],
+            '3-4-3': [
+                { id:'GK',  label:'GK',  x:50, y:88, accepts:['GK'] },
+                { id:'CB1', label:'CB',  x:26, y:74, accepts:['CB'] },
+                { id:'CB2', label:'CB',  x:50, y:76, accepts:['CB'] },
+                { id:'CB3', label:'CB',  x:74, y:74, accepts:['CB'] },
+                { id:'LM',  label:'LM',  x:14, y:50, accepts:['LM','LW','LB'] },
+                { id:'CM1', label:'CM',  x:38, y:52, accepts:['CM','CDM'] },
+                { id:'CM2', label:'CM',  x:62, y:52, accepts:['CM','CDM'] },
+                { id:'RM',  label:'RM',  x:86, y:50, accepts:['RM','RW','RB'] },
+                { id:'LW',  label:'LW',  x:22, y:24, accepts:['LW','LM','ST','CF'] },
+                { id:'RW',  label:'RW',  x:78, y:24, accepts:['RW','RM','ST','CF'] },
+                { id:'ST',  label:'ST',  x:50, y:16, accepts:['ST','CF'] },
+            ],
+            '4-3-2-1': [
+                { id:'GK',  label:'GK',  x:50, y:88, accepts:['GK'] },
+                { id:'LB',  label:'LB',  x:14, y:70, accepts:['LB'] },
+                { id:'CB1', label:'CB',  x:36, y:75, accepts:['CB'] },
+                { id:'CB2', label:'CB',  x:64, y:75, accepts:['CB'] },
+                { id:'RB',  label:'RB',  x:86, y:70, accepts:['RB'] },
+                { id:'CDM', label:'CDM', x:50, y:56, accepts:['CDM','CM'] },
+                { id:'CM1', label:'CM',  x:30, y:48, accepts:['CM','CDM','CAM'] },
+                { id:'CM2', label:'CM',  x:70, y:48, accepts:['CM','CDM','CAM'] },
+                { id:'CAM1',label:'CAM', x:36, y:32, accepts:['CAM','CM','CF','LW'] },
+                { id:'CAM2',label:'CAM', x:64, y:32, accepts:['CAM','CM','CF','RW'] },
+                { id:'ST',  label:'ST',  x:50, y:16, accepts:['ST','CF'] },
+            ],
+            '5-4-1': [
+                { id:'GK',  label:'GK',  x:50, y:88, accepts:['GK'] },
+                { id:'LWB', label:'LWB', x:10, y:68, accepts:['LB','LM'] },
+                { id:'CB1', label:'CB',  x:30, y:74, accepts:['CB'] },
+                { id:'CB2', label:'CB',  x:50, y:76, accepts:['CB'] },
+                { id:'CB3', label:'CB',  x:70, y:74, accepts:['CB'] },
+                { id:'RWB', label:'RWB', x:90, y:68, accepts:['RB','RM'] },
+                { id:'LM',  label:'LM',  x:18, y:46, accepts:['LM','LW'] },
+                { id:'CM1', label:'CM',  x:40, y:50, accepts:['CM','CDM','CAM'] },
+                { id:'CM2', label:'CM',  x:60, y:50, accepts:['CM','CDM','CAM'] },
+                { id:'RM',  label:'RM',  x:82, y:46, accepts:['RM','RW'] },
+                { id:'ST',  label:'ST',  x:50, y:18, accepts:['ST','CF'] },
+            ],
+        };
+
+        const DIFFICULTIES = [
+            { id:'easy',   label:'Facile',       tokens:3, sub:'3 Gettoni' },
+            { id:'normal', label:'Normale',      tokens:2, sub:'2 Gettoni' },
+            { id:'hard',   label:'Difficile',    tokens:1, sub:'1 Gettone' },
+            { id:'impossible', label:'Impossibile', tokens:0, sub:'0 Gettoni' },
+        ];
+
+        /* ══════════════════════════════════════════════════════════
+           STATE
+           ══════════════════════════════════════════════════════════ */
+        let allPlayers = [];
+        let formation = null;       // selected formation key
+        let slots = [];             // current formation slots array
+        let filledSlots = {};       // slotId -> player
+        let usedTeamYears = new Set();
+        let currentRoster = [];
+        let currentTeamYear = null;
+        let selectedPlayer = null;
+        let selectedPlayerIdx = null;
+        let rollCount = 0;
+        let tokens = 0;
+        let gamePhase = 'setup';    // setup | idle | roster | placing | complete
+        let diabolicaMode = false;  // Diabolical Mode state (ON/OFF)
+        let oopActive = false;      // active OOP state when deadlock occurs
+
+        /* ══════════════════════════════════════════════════════════
+           DOM REFS
+           ══════════════════════════════════════════════════════════ */
+        const $ = id => document.getElementById(id);
+        const startScreen   = $('start-screen');
+        const gameScreen    = $('game-screen');
+        const startBtn      = $('start-btn');
+        const formGrid      = $('formation-grid');
+        const diffGrid      = $('difficulty-grid');
+        const pitchEl        = $('pitch');
+        const rollBtn        = $('roll-btn');
+        const actionRow      = $('action-row');
+        const rerollTeamBtn  = $('reroll-team-btn');
+        const rerollYearBtn  = $('reroll-year-btn');
+        const skipBtn        = $('skip-btn');
+        const rosterSection  = $('roster-section');
+        const emptyState     = $('empty-state');
+        const rtdEl          = $('rolled-team-display');
+        const rtdName        = $('rtd-name');
+        const rtdYear        = $('rtd-year');
+        const rtdCount       = $('rtd-count');
+        const historyEl      = $('history-section');
+        const statFilled     = $('stat-filled');
+        const statAvg        = $('stat-avg');
+        const statRolls      = $('stat-rolls');
+        const statTokens     = $('stat-tokens');
+        const formBadge      = $('formation-badge');
+        const gcOverlay      = $('game-complete');
+        const finalRating    = $('final-rating-value');
+        const restartBtn     = $('restart-btn');
+        const instrBar       = $('instructions-bar');
+        const themeToggle    = $('theme-toggle');
+
+        /* ══════════════════════════════════════════════════════════
+           INIT
+           ══════════════════════════════════════════════════════════ */
+        async function init() {
+            initTheme();
+            buildStartScreen();
+            await loadDatabase();
+            bindEvents();
+        }
+
+        function initTheme() {
+            const saved = localStorage.getItem('8-0-theme');
+            if (saved === 'dark') document.documentElement.setAttribute('data-theme','dark');
+        }
+
+        async function loadDatabase() {
+            startBtn.textContent = 'Caricamento...';
+            try {
+                let resp;
+                try {
+                    resp = await fetch('final_game_database.json');
+                    if (!resp.ok) throw new Error();
+                } catch {
+                    resp = await fetch('database_7a0_rated.json');
+                }
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                allPlayers = await resp.json();
+                console.log('[8-0] Loaded ' + allPlayers.length + ' players.');
+                startBtn.textContent = 'Inizia il Draft';
+                validateStartBtn();
+            } catch (err) {
+                startBtn.textContent = 'Errore caricamento DB';
+                console.error('[8-0] DB load failed:', err);
+            }
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           START SCREEN
+           ══════════════════════════════════════════════════════════ */
+        let selectedFormation = null;
+        let selectedDifficulty = null;
+
+        function buildStartScreen() {
+            // Formation buttons
+            Object.keys(FORMATIONS).forEach(key => {
+                const btn = document.createElement('button');
+                btn.className = 'formation-btn';
+                btn.textContent = key;
+                btn.dataset.formation = key;
+                btn.addEventListener('click', () => selectFormation(key));
+                formGrid.appendChild(btn);
+            });
+
+            // Difficulty buttons
+            DIFFICULTIES.forEach(d => {
+                const btn = document.createElement('button');
+                btn.className = 'diff-btn';
+                btn.dataset.difficulty = d.id;
+                btn.innerHTML = d.label + '<small>' + d.sub + '</small>';
+                btn.addEventListener('click', () => selectDifficulty(d.id));
+                diffGrid.appendChild(btn);
+            });
+        }
+
+        function selectFormation(key) {
+            selectedFormation = key;
+            formGrid.querySelectorAll('.formation-btn').forEach(b =>
+                b.classList.toggle('selected', b.dataset.formation === key)
+            );
+            validateStartBtn();
+        }
+
+        function selectDifficulty(id) {
+            selectedDifficulty = id;
+            diffGrid.querySelectorAll('.diff-btn').forEach(b =>
+                b.classList.toggle('selected', b.dataset.difficulty === id)
+            );
+            validateStartBtn();
+        }
+
+        function validateStartBtn() {
+            startBtn.disabled = !(selectedFormation && selectedDifficulty && allPlayers.length > 0);
+        }
+
+        function startGame() {
+            formation = selectedFormation;
+            slots = FORMATIONS[formation];
+            const diff = DIFFICULTIES.find(d => d.id === selectedDifficulty);
+            tokens = diff.tokens;
+            diabolicaMode = $('diabolica-toggle').checked;
+            oopActive = false;
+
+            // Hide start, show game
+            startScreen.classList.add('hidden');
+            gameScreen.classList.add('active');
+            formBadge.textContent = formation;
+            statTokens.textContent = tokens;
+            gamePhase = 'idle';
+
+            renderPitchSlots();
+            updateInstructions('Premi <span class="key">Roll Team</span> per pescare una squadra.');
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           THEME TOGGLE
+           ══════════════════════════════════════════════════════════ */
+        function toggleTheme() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            if (isDark) {
+                document.documentElement.removeAttribute('data-theme');
+                localStorage.setItem('8-0-theme','light');
+            } else {
+                document.documentElement.setAttribute('data-theme','dark');
+                localStorage.setItem('8-0-theme','dark');
+            }
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           PITCH RENDERING
+           ══════════════════════════════════════════════════════════ */
+        function renderPitchSlots() {
+            // Remove old slots
+            pitchEl.querySelectorAll('.slot').forEach(s => s.remove());
+
+            slots.forEach(slot => {
+                const el = document.createElement('div');
+                el.className = 'slot empty';
+                el.id = 'slot-' + slot.id;
+                el.style.left = slot.x + '%';
+                el.style.top = slot.y + '%';
+                el.innerHTML = '<span class="slot-pos">' + slot.label + '</span>';
+                el.addEventListener('click', () => onSlotClick(slot.id));
+                pitchEl.appendChild(el);
+            });
+        }
+
+        function updateSlotVisual(slotId, animate) {
+            const slotDef = slots.find(s => s.id === slotId);
+            const el = $('slot-' + slotId);
+            const player = filledSlots[slotId];
+
+            if (player) {
+                const oopClass = player.isOop ? ' oop' : '';
+                el.className = 'slot filled' + oopClass + (animate ? ' just-placed' : '');
+                const oopBadge = player.isOop ? ' <span class="oop-badge">OOP</span>' : '';
+                el.innerHTML =
+                    '<span class="slot-name" title="' + player.name + '">' + player.name + '</span>' +
+                    '<span class="slot-rating">' + player.overall_rating + '</span>' +
+                    '<span class="slot-pos-small">' + slotDef.label + oopBadge + '</span>';
+            } else {
+                el.className = 'slot empty';
+                el.innerHTML = '<span class="slot-pos">' + slotDef.label + '</span>';
+            }
+        }
+
+        function highlightSlots(slotIds) {
+            slots.forEach(s => $('slot-' + s.id).classList.remove('highlight'));
+            slotIds.forEach(id => $('slot-' + id).classList.add('highlight'));
+        }
+
+        function clearHighlights() {
+            slots.forEach(s => $('slot-' + s.id).classList.remove('highlight'));
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           POSITION LOGIC
+           ══════════════════════════════════════════════════════════ */
+        function getPlayerPositions(player) {
+            const pos = [player.primary_position];
+            if (player.secondary_positions) pos.push(...player.secondary_positions);
+            return pos;
+        }
+
+        function getCompatibleSlots(player) {
+            if (oopActive) {
+                return slots.filter(s => !filledSlots[s.id]).map(s => s.id);
+            }
+            const positions = getPlayerPositions(player);
+            return slots
+                .filter(s => !filledSlots[s.id])
+                .filter(s => s.accepts.some(a => positions.includes(a)))
+                .map(s => s.id);
+        }
+
+        function isPlayerDisabled(player) {
+            return getCompatibleSlots(player).length === 0;
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           ROLL LOGIC
+           ══════════════════════════════════════════════════════════ */
+        function getAvailableTeamYears() {
+            const map = new Map();
+            allPlayers.forEach(p => {
+                const key = p.team_name + '|||' + p.year;
+                if (!map.has(key)) {
+                    map.set(key, { team_name:p.team_name, year:p.year, players:[] });
+                }
+                map.get(key).players.push(p);
+            });
+            let list = Array.from(map.values()).filter(ty =>
+                ty.players.length >= 11 && !usedTeamYears.has(ty.team_name + '|||' + ty.year)
+            );
+
+            if (!diabolicaMode) {
+                const emptySlots = slots.filter(s => !filledSlots[s.id]);
+                const filtered = list.filter(ty => {
+                    return ty.players.some(player => {
+                        const playerPos = getPlayerPositions(player);
+                        return emptySlots.some(s => s.accepts.some(a => playerPos.includes(a)));
+                    });
+                });
+                if (filtered.length > 0) {
+                    list = filtered;
+                }
+            }
+            return list;
+        }
+
+        function rollTeam() {
+            if (gamePhase !== 'idle') return;
+
+            const available = getAvailableTeamYears();
+            if (available.length === 0) {
+                updateInstructions('Nessuna squadra disponibile!');
+                return;
+            }
+
+            const pick = available[Math.floor(Math.random() * available.length)];
+            usedTeamYears.add(pick.team_name + '|||' + pick.year);
+            currentTeamYear = pick;
+
+            currentRoster = allPlayers.filter(
+                p => p.team_name === pick.team_name && p.year === pick.year
+            ).sort((a,b) => b.overall_rating - a.overall_rating);
+
+            rollCount++;
+            statRolls.textContent = rollCount;
+            
+            // Check for deadlock if Diabolical Mode is ON
+            oopActive = diabolicaMode && currentRoster.every(p => isPlayerDisabled(p));
+
+            gamePhase = 'roster';
+            selectedPlayer = null;
+            selectedPlayerIdx = null;
+
+            rollBtn.disabled = true;
+            actionRow.classList.remove('hidden');
+            updateRerollButtons();
+            showTeamDisplay();
+            renderRoster();
+            
+            if (oopActive) {
+                updateInstructions('<span style="color:var(--danger);font-weight:bold;">ATTENZIONE: Nessun ruolo compatibile! Scegli un giocatore da sacrificare.</span>');
+            } else {
+                updateInstructions('Seleziona un giocatore dalla lista.');
+            }
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           REROLL LOGIC
+           ══════════════════════════════════════════════════════════ */
+        function rerollTeam() {
+            if (tokens <= 0 || gamePhase === 'idle') return;
+
+            const available = getAvailableTeamYears();
+            if (available.length === 0) return;
+
+            tokens--;
+            statTokens.textContent = tokens;
+
+            const pick = available[Math.floor(Math.random() * available.length)];
+            usedTeamYears.add(pick.team_name + '|||' + pick.year);
+            currentTeamYear = pick;
+
+            currentRoster = allPlayers.filter(
+                p => p.team_name === pick.team_name && p.year === pick.year
+            ).sort((a,b) => b.overall_rating - a.overall_rating);
+
+            // Re-evaluate deadlock
+            oopActive = diabolicaMode && currentRoster.every(p => isPlayerDisabled(p));
+
+            selectedPlayer = null;
+            selectedPlayerIdx = null;
+            gamePhase = 'roster';
+            clearHighlights();
+            updateRerollButtons();
+            showTeamDisplay();
+            renderRoster();
+            
+            if (oopActive) {
+                updateInstructions('<span style="color:var(--danger);font-weight:bold;">ATTENZIONE: Nessun ruolo compatibile! Scegli un giocatore da sacrificare.</span>');
+            } else {
+                updateInstructions('Nuova squadra estratta! Seleziona un giocatore.');
+            }
+        }
+
+        function rerollYear() {
+            if (tokens <= 0 || !currentTeamYear) return;
+
+            const teamName = currentTeamYear.team_name;
+            const currentYear = currentTeamYear.year;
+
+            const allYears = [...new Set(
+                allPlayers.filter(p => p.team_name === teamName).map(p => p.year)
+            )];
+
+            const availableYears = allYears.filter(y =>
+                y !== currentYear && !usedTeamYears.has(teamName + '|||' + y)
+            );
+
+            if (availableYears.length === 0) return;
+
+            tokens--;
+            statTokens.textContent = tokens;
+
+            const newYear = availableYears[Math.floor(Math.random() * availableYears.length)];
+            usedTeamYears.add(teamName + '|||' + newYear);
+            currentTeamYear = { team_name:teamName, year:newYear };
+
+            currentRoster = allPlayers.filter(
+                p => p.team_name === teamName && p.year === newYear
+            ).sort((a,b) => b.overall_rating - a.overall_rating);
+
+            // Re-evaluate deadlock
+            oopActive = diabolicaMode && currentRoster.every(p => isPlayerDisabled(p));
+
+            selectedPlayer = null;
+            selectedPlayerIdx = null;
+            gamePhase = 'roster';
+            clearHighlights();
+            updateRerollButtons();
+            showTeamDisplay();
+            renderRoster();
+
+            if (oopActive) {
+                updateInstructions('<span style="color:var(--danger);font-weight:bold;">ATTENZIONE: Nessun ruolo compatibile! Scegli un giocatore da sacrificare.</span>');
+            } else {
+                updateInstructions('Nuovo anno estratto! Seleziona un giocatore.');
+            }
+        }
+
+        function updateRerollButtons() {
+            // Reroll Team
+            const canTeam = tokens > 0 && getAvailableTeamYears().length > 0;
+            rerollTeamBtn.disabled = !canTeam;
+
+            // Reroll Year
+            if (currentTeamYear && tokens > 0) {
+                const teamName = currentTeamYear.team_name;
+                const allYears = [...new Set(
+                    allPlayers.filter(p => p.team_name === teamName).map(p => p.year)
+                )];
+                const availYears = allYears.filter(y =>
+                    y !== currentTeamYear.year && !usedTeamYears.has(teamName + '|||' + y)
+                );
+                rerollYearBtn.disabled = availYears.length === 0;
+            } else {
+                rerollYearBtn.disabled = true;
+            }
+        }
+
+        function showTeamDisplay() {
+            rtdName.textContent = currentTeamYear.team_name;
+            rtdYear.textContent = 'Cup ' + currentTeamYear.year;
+            rtdCount.textContent = currentRoster.length + ' giocatori disponibili';
+            rtdEl.classList.add('visible');
+        }
+
+        function skipRoster() {
+            selectedPlayer = null;
+            selectedPlayerIdx = null;
+            currentRoster = [];
+            currentTeamYear = null;
+            gamePhase = 'idle';
+
+            rosterSection.innerHTML = '';
+            rosterSection.appendChild(emptyState);
+            rtdEl.classList.remove('visible');
+            actionRow.classList.add('hidden');
+            rollBtn.disabled = false;
+            clearHighlights();
+            updateInstructions('Roster saltato. Premi <span class="key">Roll Team</span> per continuare.');
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           ROSTER RENDERING
+           ══════════════════════════════════════════════════════════ */
+        function renderRoster() {
+            rosterSection.innerHTML = '';
+
+            const header = document.createElement('div');
+            header.className = 'roster-header';
+            header.textContent = 'Scegli un Giocatore';
+            rosterSection.appendChild(header);
+
+            if (oopActive) {
+                const banner = document.createElement('div');
+                banner.className = 'oop-warning-banner';
+                banner.innerHTML = 'NESSUN RUOLO COMPATIBILE<br>Scegli un giocatore da sacrificare fuori ruolo (Malus -50% Rating).';
+                rosterSection.appendChild(banner);
+            }
+
+            currentRoster.forEach((player, idx) => {
+                const disabled = !oopActive && isPlayerDisabled(player);
+                const item = document.createElement('div');
+                item.className = 'roster-item' + (disabled ? ' disabled' : '');
+                item.id = 'roster-' + idx;
+
+                const tier = player.tier || 'C';
+                const positions = getPlayerPositions(player);
+
+                item.innerHTML =
+                    '<span class="ri-name">' + player.name + '</span>' +
+                    '<span class="ri-pos">' + positions.join('/') + '</span>' +
+                    '<span class="ri-rating tier-' + tier + '">' + player.overall_rating + '</span>';
+
+                if (!disabled) {
+                    item.addEventListener('click', () => onPlayerSelect(player, idx));
+                }
+                rosterSection.appendChild(item);
+            });
+
+            if (!oopActive) {
+                const allDisabled = currentRoster.every(p => isPlayerDisabled(p));
+                if (allDisabled) {
+                    const notice = document.createElement('div');
+                    notice.style.cssText = 'padding:16px;text-align:center;font-size:11px;color:var(--ink-muted);font-weight:600;';
+                    notice.textContent = 'Nessun giocatore compatibile con gli slot rimanenti.';
+                    rosterSection.appendChild(notice);
+                    updateInstructions('Nessun giocatore compatibile. Usa un gettone o premi Passa.');
+                }
+            }
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           SELECTION / PLACEMENT
+           ══════════════════════════════════════════════════════════ */
+        function onPlayerSelect(player, idx) {
+            // Deselect previous
+            rosterSection.querySelectorAll('.roster-item.selected').forEach(el =>
+                el.classList.remove('selected')
+            );
+
+            selectedPlayer = player;
+            selectedPlayerIdx = idx;
+            gamePhase = 'placing';
+
+            const el = $('roster-' + idx);
+            if (el) el.classList.add('selected');
+
+            const compat = getCompatibleSlots(player);
+            highlightSlots(compat);
+            
+            if (oopActive) {
+                updateInstructions('Posiziona <strong>' + player.name + '</strong> in un qualsiasi ruolo libero (subirà il Malus OOP).');
+            } else {
+                updateInstructions('Posiziona <strong>' + player.name + '</strong> in uno slot evidenziato.');
+            }
+        }
+
+        function onSlotClick(slotId) {
+            if (gamePhase !== 'placing' || !selectedPlayer) return;
+
+            const el = $('slot-' + slotId);
+            if (!el.classList.contains('highlight')) return;
+
+            const playerToPlace = { ...selectedPlayer };
+            if (oopActive) {
+                playerToPlace.isOop = true;
+                playerToPlace.original_rating = playerToPlace.overall_rating;
+                playerToPlace.overall_rating = Math.floor(playerToPlace.overall_rating / 2);
+            }
+
+            // Place player
+            filledSlots[slotId] = playerToPlace;
+            updateSlotVisual(slotId, true);
+            clearHighlights();
+            addHistory(playerToPlace, slotId);
+
+            // Reset
+            selectedPlayer = null;
+            selectedPlayerIdx = null;
+            currentRoster = [];
+            currentTeamYear = null;
+            gamePhase = 'idle';
+            oopActive = false;
+
+            rosterSection.innerHTML = '';
+            rosterSection.appendChild(emptyState);
+            rtdEl.classList.remove('visible');
+            actionRow.classList.add('hidden');
+
+            updateStats();
+
+            const filled = Object.keys(filledSlots).length;
+            if (filled >= 11) {
+                endGame();
+            } else {
+                rollBtn.disabled = false;
+                updateInstructions((11 - filled) + ' slot rimanenti. Premi <span class="key">Roll Team</span> per continuare.');
+            }
+        }
+
+        function cancelSelection() {
+            if (gamePhase !== 'placing') return;
+            selectedPlayer = null;
+            selectedPlayerIdx = null;
+            gamePhase = 'roster';
+            clearHighlights();
+            rosterSection.querySelectorAll('.roster-item.selected').forEach(el =>
+                el.classList.remove('selected')
+            );
+            updateInstructions('Selezione annullata. Scegli un altro giocatore.');
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           STATS / HISTORY
+           ══════════════════════════════════════════════════════════ */
+        function updateStats() {
+            const filled = Object.keys(filledSlots).length;
+            const players = Object.values(filledSlots);
+            statFilled.textContent = filled + '/11';
+            if (players.length > 0) {
+                statAvg.textContent = Math.round(
+                    players.reduce((s,p) => s + p.overall_rating, 0) / players.length
+                );
+            } else {
+                statAvg.textContent = '--';
+            }
+        }
+
+        function addHistory(player, slotId) {
+            const slotDef = slots.find(s => s.id === slotId);
+            const item = document.createElement('div');
+            item.className = 'history-item';
+            const oopText = player.isOop ? ' <span style="color:var(--danger);font-weight:bold;">[OOP]</span>' : '';
+            item.innerHTML =
+                '<span class="hi-round">#' + rollCount + '</span>' +
+                '<span class="hi-text"><strong>' + player.name + '</strong> (' + player.overall_rating + ')' + oopText + ' &rarr; ' + slotDef.label + '</span>' +
+                '<span class="hi-team">' + player.team_name + ' ' + player.year + '</span>';
+            historyEl.prepend(item);
+        }
+
+        function updateInstructions(html) {
+            instrBar.innerHTML = html;
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           GAME END / RESTART
+           ══════════════════════════════════════════════════════════ */
+        function endGame() {
+            gamePhase = 'complete';
+            const players = Object.values(filledSlots);
+            const total = players.reduce((s,p) => s + p.overall_rating, 0);
+            finalRating.textContent = total;
+            gcOverlay.classList.add('visible');
+            rollBtn.disabled = true;
+            updateInstructions('Draft completato! La tua squadra e\u0300 completa.');
+        }
+
+        function restartGame() {
+            // Full reset
+            filledSlots = {};
+            usedTeamYears = new Set();
+            currentRoster = [];
+            currentTeamYear = null;
+            selectedPlayer = null;
+            selectedPlayerIdx = null;
+            rollCount = 0;
+            gamePhase = 'setup';
+            selectedFormation = null;
+            selectedDifficulty = null;
+            formation = null;
+            slots = [];
+            tokens = 0;
+            diabolicaMode = false;
+            oopActive = false;
+
+            // Reset UI
+            gcOverlay.classList.remove('visible');
+            gameScreen.classList.remove('active');
+            startScreen.classList.remove('hidden');
+            historyEl.innerHTML = '';
+            rosterSection.innerHTML = '';
+            rosterSection.appendChild(emptyState);
+            rtdEl.classList.remove('visible');
+            actionRow.classList.add('hidden');
+            rollBtn.disabled = false;
+            rollBtn.textContent = 'Roll Team';
+            statFilled.textContent = '0/11';
+            statAvg.textContent = '--';
+            statRolls.textContent = '0';
+            statTokens.textContent = '0';
+            pitchEl.querySelectorAll('.slot').forEach(s => s.remove());
+
+            // Reset start screen selections
+            formGrid.querySelectorAll('.formation-btn').forEach(b => b.classList.remove('selected'));
+            diffGrid.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected'));
+            $('diabolica-toggle').checked = false;
+            startBtn.disabled = true;
+            startBtn.textContent = 'Inizia il Draft';
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           EVENT BINDINGS
+           ══════════════════════════════════════════════════════════ */
+        function bindEvents() {
+            startBtn.addEventListener('click', startGame);
+            rollBtn.addEventListener('click', rollTeam);
+            rerollTeamBtn.addEventListener('click', rerollTeam);
+            rerollYearBtn.addEventListener('click', rerollYear);
+            skipBtn.addEventListener('click', skipRoster);
+            restartBtn.addEventListener('click', restartGame);
+            themeToggle.addEventListener('click', toggleTheme);
+
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape' && gamePhase === 'placing') cancelSelection();
+            });
+        }
+
+        // ── LAUNCH ──
+        init();
+
+    })();
+    </script>
+
+</body>
+</html>

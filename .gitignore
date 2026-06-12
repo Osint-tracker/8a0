@@ -1,0 +1,24 @@
+# Large CSV Data
+*.csv
+
+# Intermediate / Raw Databases
+database_7a0_master.json
+database_7a0_rated.json
+database_7a0_rated_prev.json
+historical_rosters_1955_2012.json
+
+# LLM Batches and Cache
+enriched_batches/
+enriched_modern_batches/
+output_batches/
+
+# Python Cache & Logs
+__pycache__/
+*.log
+
+# LLM Scripts (contains secrets)
+enrich_players.py
+modern_era_perfection_pipeline.py
+
+# Allow final database for the game
+!final_game_database.json
